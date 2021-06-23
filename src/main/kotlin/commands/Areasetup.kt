@@ -67,14 +67,18 @@ object Areasetup {
                         val p = it.sender as Player
                         val loc1 = getareas().getLocation("mode.${p.uniqueId}.pos1")
                         val loc2 = getareas().getLocation("mode.${p.uniqueId}.pos2")
-                        if (loc1?.world != loc2?.world) {
-                            p.msg("적어도 같은 월드에서 두 지점을 찍어주세요!")
+                        if (loc1 != null && loc2 != null) {
+                            if (loc1.world != loc2.world) {
+                                p.msg("적어도 같은 월드에서 두 지점을 찍어주세요!")
+                            } else {
+                                getareas().set(
+                                    "areas.${it.getArgument("name")}", listOf(loc1, loc2)
+                                )
+                                getareas().save(getareasloc())
+                                p.msg("구역 ${it.getArgument("name")} 지정 완료!")
+                            }
                         } else {
-                            getareas().set(
-                                "areas.${it.getArgument("name")}", listOf(loc1, loc2)
-                            )
-                            getareas().save(getareasloc())
-                            p.msg("구역 ${it.getArgument("name")} 지정 완료!")
+                            p.msg("적어도 두 지점을 찍어주세요!")
                         }
                     }
                 }
