@@ -1,0 +1,8 @@
+name: OreRegen
+main: Main
+version: 1.0-SNAPSHOT
+api-version: 1.16
+commands:
+  areasetup:
+    description: "setup"
+    permission: "admin.setup"
