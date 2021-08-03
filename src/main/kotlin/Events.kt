@@ -11,6 +11,7 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.plugin.Plugin
+import java.io.File
 import kotlin.math.nextDown
 
 class Events : Listener {
@@ -20,6 +21,9 @@ class Events : Listener {
     }
     private fun getInstance() : Plugin {
         return Main.instance
+    }
+    private fun getPreset() : YamlConfiguration {
+        return Main.genpreset
     }
 
     @EventHandler
@@ -32,10 +36,12 @@ class Events : Listener {
             p.msg("${tbl.x},${tbl.y},${tbl.z} 이 1번 위치입니다.")
         }
         val a = getareas().section("areas")?.keys
-        val b = getInstance().config.section("RegenRate")?.keys
         a?.forEach { key ->
+            var preset = getareas().getString("areas.$key.preset")
+            if (preset == null) preset = "default"
+            val b = getPreset().section(preset)?.keys
             @Suppress("UNCHECKED_CAST")
-            val loclist = getareas().getList("areas.$key") as List<Location>
+            val loclist = getareas().getList("areas.$key.pos") as List<Location>
             val pos1 = loclist[0]
             val pos2 = loclist[1]
             val px = listOf(pos1.blockX, pos2.blockX).sorted()
@@ -43,12 +49,12 @@ class Events : Listener {
             val pz = listOf(pos1.blockZ, pos2.blockZ).sorted()
             if (e.block.x in px[0]..px[1] && e.block.y in py[0]..py[1] && e.block.z in pz[0]..pz[1]) {
                 val rand = (Math.random() * 100)/1.00.nextDown()
-                if (getInstance().config.getBoolean("debug")) println("Area [$key] : $rand")
+                if (getInstance().config.getBoolean("debug")) println("Area [$key] : $rand | Preset : $preset")
                 var block : Material = Material.AIR
                 var total = 0.0
                 var checked = true
                 b?.forEach { keys ->
-                    val v = getInstance().config.getDouble("RegenRate.$keys")
+                    val v = getPreset().getDouble("$preset.$keys")
                     val final = total + v
                     if (getInstance().config.getBoolean("debug")) println("$keys : ${rand in total.rangeTo(final)} ($total..${final})")
                     if (rand in total.rangeTo(final) && checked) {
