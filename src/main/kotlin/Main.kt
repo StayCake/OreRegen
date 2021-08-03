@@ -1,6 +1,6 @@
-import com.github.monun.kommand.kommand
 import commands.Areasetup
 import hazae41.minecraft.kutils.get
+import io.github.monun.kommand.kommand
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
