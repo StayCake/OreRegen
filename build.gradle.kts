@@ -11,9 +11,9 @@ repositories {
 
 dependencies {
     compileOnly(kotlin("stdlib")) // Kotlin
-    implementation("com.github.monun:kommand:+") // For future command creation convenience.
     implementation("com.github.hazae41:mc-kutils:+")
-    compileOnly("com.destroystokyo.paper:paper-api:+") // Paper Latest
+    compileOnly("io.github.monun:kommand-api:+") // For future command creation convenience.
+    compileOnly("io.papermc.paper:paper-api:+") // Paper Latest
 }
 
 tasks {

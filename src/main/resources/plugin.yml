@@ -1,8 +1,7 @@
 name: OreRegen
 main: Main
-version: 1.01
-api-version: 1.16
-commands:
-  areasetup:
-    description: "setup"
-    permission: "admin.setup"
+version: 1.1
+api-version: 1.17
+depend: [Kotlin]
+libraries:
+  - io.github.monun:kommand:2.4.1
