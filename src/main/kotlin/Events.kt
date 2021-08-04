@@ -1,20 +1,35 @@
 import hazae41.minecraft.kutils.bukkit.keys
 import hazae41.minecraft.kutils.bukkit.msg
 import hazae41.minecraft.kutils.bukkit.section
+import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Sound
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.Damageable
+import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.plugin.Plugin
 import java.io.File
 import kotlin.math.nextDown
 
 class Events : Listener {
+    private val pickaxe = listOf(
+        Material.WOODEN_PICKAXE,
+        Material.STONE_PICKAXE,
+        Material.IRON_PICKAXE,
+        Material.GOLDEN_PICKAXE,
+        Material.DIAMOND_PICKAXE,
+        Material.NETHERITE_PICKAXE
+    )
 
     private fun getareas() : YamlConfiguration {
         return Main.areas
@@ -26,12 +41,29 @@ class Events : Listener {
         return Main.genpreset
     }
 
+    private fun usetool(mh: ItemStack,p: Player) {
+        val unbreaking = mh.getEnchantmentLevel(Enchantment.DURABILITY)
+        if (Math.random() * 100 <= 100/(unbreaking + 1)) {
+            mh.itemMeta = mh.itemMeta.apply {
+                if (this is Damageable) {
+                    damage += 1
+                    if (mh.type.maxDurability <= damage) {
+                        p.inventory.setItemInMainHand(ItemStack(Material.AIR))
+                        p.playSound(p.location, Sound.ENTITY_ITEM_BREAK,1F,1F)
+                        return
+                    }
+                }
+            }
+        }
+    }
+
     @EventHandler
     private fun act1(e: BlockBreakEvent) {
         val p = e.player
         val tbl = e.block.location
         if (getareas().getBoolean("mode.${p.uniqueId}.setup")) {
             e.isCancelled = true
+            usetool(p.inventory.itemInMainHand,p)
             getareas().set("mode.${p.uniqueId}.pos1", tbl)
             p.msg("${tbl.x},${tbl.y},${tbl.z} 이 1번 위치입니다.")
         }
@@ -64,8 +96,19 @@ class Events : Listener {
                     total += v
                 }
                 e.isCancelled = true
-                e.block.getDrops(e.player.inventory.itemInMainHand,e.player).forEach {
-                    e.block.world.dropItemNaturally(e.block.location,it)
+                if (e.player.gameMode != GameMode.CREATIVE) {
+                    p.giveExp(e.expToDrop,true)
+                    e.block.getDrops(e.player.inventory.itemInMainHand,e.player).forEach {
+                        e.block.world.dropItemNaturally(e.block.location,it)
+                    }
+                    when {
+                        pickaxe.contains(p.inventory.itemInOffHand.type) -> {
+                            usetool(p.inventory.itemInOffHand,p)
+                        }
+                        pickaxe.contains(p.inventory.itemInMainHand.type) -> {
+                            usetool(p.inventory.itemInMainHand,p)
+                        }
+                    }
                 }
                 e.block.type = block
             }

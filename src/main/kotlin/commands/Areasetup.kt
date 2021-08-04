@@ -82,7 +82,7 @@ object Areasetup {
                 }
             }
             executes {
-                (player).msg("대상을 입력하세요.")
+                player.msg("대상을 입력하세요.")
             }
         }
         node.then("create") {
