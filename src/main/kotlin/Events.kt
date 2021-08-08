@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockPistonEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -63,54 +64,40 @@ class Events : Listener {
         val tbl = e.block.location
         if (getareas().getBoolean("mode.${p.uniqueId}.setup")) {
             e.isCancelled = true
-            usetool(p.inventory.itemInMainHand,p)
             getareas().set("mode.${p.uniqueId}.pos1", tbl)
             p.msg("${tbl.x},${tbl.y},${tbl.z} 이 1번 위치입니다.")
         }
         val a = getareas().section("areas")?.keys
         a?.forEach { key ->
-            var preset = getareas().getString("areas.$key.preset")
-            if (preset == null) preset = "default"
-            val b = getPreset().section(preset)?.keys
             @Suppress("UNCHECKED_CAST")
             val loclist = getareas().getList("areas.$key.pos") as List<Location>
-            val pos1 = loclist[0]
-            val pos2 = loclist[1]
-            val px = listOf(pos1.blockX, pos2.blockX).sorted()
-            val py = listOf(pos1.blockY, pos2.blockY).sorted()
-            val pz = listOf(pos1.blockZ, pos2.blockZ).sorted()
+            val pos = listOf(loclist[0],loclist[1])
+            val px = listOf(pos[0].blockX, pos[1].blockX).sorted()
+            val py = listOf(pos[0].blockY, pos[1].blockY).sorted()
+            val pz = listOf(pos[0].blockZ, pos[1].blockZ).sorted()
             if (e.block.x in px[0]..px[1] && e.block.y in py[0]..py[1] && e.block.z in pz[0]..pz[1]) {
                 val rand = (Math.random() * 100)/1.00.nextDown()
+                val preset = getareas().getString("areas.$key.preset") ?: "default"
+                val b = getPreset().section(preset)?.keys
                 if (getInstance().config.getBoolean("debug")) println("Area [$key] : $rand | Preset : $preset")
-                var block : Material = Material.AIR
+                var block : Material? = null
                 var total = 0.0
-                var checked = true
                 b?.forEach { keys ->
                     val v = getPreset().getDouble("$preset.$keys")
-                    val final = total + v
-                    if (getInstance().config.getBoolean("debug")) println("$keys : ${rand in total.rangeTo(final)} ($total..${final})")
-                    if (rand in total.rangeTo(final) && checked) {
-                        block = Material.matchMaterial(keys) ?: Material.AIR
-                        checked = false
-                    }
+                    if (getInstance().config.getBoolean("debug")) println("$keys : ${rand in total.rangeTo(total + v)} ($total..${total + v})")
+                    if (rand in total.rangeTo(total + v)) block = Material.matchMaterial(keys)
                     total += v
                 }
-                e.isCancelled = true
                 if (e.player.gameMode != GameMode.CREATIVE) {
                     p.giveExp(e.expToDrop,true)
                     e.block.getDrops(e.player.inventory.itemInMainHand,e.player).forEach {
                         e.block.world.dropItemNaturally(e.block.location,it)
                     }
-                    when {
-                        pickaxe.contains(p.inventory.itemInOffHand.type) -> {
-                            usetool(p.inventory.itemInOffHand,p)
-                        }
-                        pickaxe.contains(p.inventory.itemInMainHand.type) -> {
-                            usetool(p.inventory.itemInMainHand,p)
-                        }
-                    }
+                    if (pickaxe.contains(p.inventory.itemInOffHand.type)) usetool(p.inventory.itemInOffHand,p)
+                    else if (pickaxe.contains(p.inventory.itemInMainHand.type)) usetool(p.inventory.itemInMainHand,p)
                 }
-                e.block.type = block
+                e.isCancelled = true
+                if (block != null) e.block.type = block as Material
             }
         }
     }
